@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Тест: какая ты еда? 🍕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500, #ffdd57);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            touch-action: manipulation;
+        }
+
+        .quiz-container {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+        }
+
+        .emoji-big {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ffa500);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .question {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #f8f8f8;
+            border: 2px solid #e0e0e0;
+            padding: 16px 20px;
+            border-radius: 16px;
+            font-size: 1.05em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            width: 100%;
+            color: #333;
+            font-weight: 500;
+            /* Удобно для пальцев */
+            min-height: 56px;
+            touch-action: manipulation;
+        }
+
+        .option-btn:active {
+            transform: scale(0.97);
+            background: #e8e8e8;
+        }
+
+        .option-btn.selected {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-restart {
+            background: #333;
+            color: white;
+        }
+
+        .result {
+            font-size: 1.2em;
+            padding: 20px;
+            background: #fff9f0;
+            border-radius: 16px;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+
+        .result .big-emoji {
+            font-size: 3.5em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .counter {
+            color: #999;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container" id="quiz">
+        <div id="questionScreen">
+            <div class="emoji-big">🤔</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="counter" id="counter">Вопрос 1 из 5</div>
+            <div class="question" id="questionText"></div>
+            <div class="options" id="optionsContainer"></div>
+            <button class="btn btn-primary" id="nextButton" disabled>Далее →</button>
+        </div>
+        <div id="resultScreen" class="hidden">
+            <div class="emoji-big">🎉</div>
+            <div class="result" id="resultText"></div>
+            <button class="btn btn-restart" onclick="restartQuiz()">Пройти заново 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Что ты выберешь на завтрак?",
+                options: ["🥞 Блинчики", "🥑 Авокадо-тост", "🍳 Яичница", "🥣 Каша"]
+            },
+            {
+                question: "Твой идеальный напиток?",
+                options: ["☕ Кофе", "🍵 Чай", "🥤 Смузи", "🧃 Сок"]
+            },
+            {
+                question: "Что закажешь в пиццерии?",
+                options: ["🍕 Маргарита", "🍕 Пепперони", "🍕 Четыре сыра", "🍕 Гавайская"]
+            },
+            {
+                question: "Лучший перекус?",
+                options: ["🍩 Пончик", "🍎 Яблоко", "🥜 Орешки", "🍪 Печенье"]
+            },
+            {
+                question: "Что на десерт?",
+                options: ["🍰 Торт", "🍦 Мороженое", "🍫 Шоколад", "🍓 Ягоды"]
+            }
+        ];
+
+        const results = [
+            { emoji: "🍕", text: "Ты — <strong>Пицца</strong>!<br>Тёплый, душевный и тебя все любят. Ты всегда в центре компании, с тобой легко и вкусно!" },
+            { emoji: "🥑", text: "Ты — <strong>Авокадо</strong>!<br>Модный, полезный и немного загадочный. Не все тебя понимают, но кто распробовал — в восторге!" },
+            { emoji: "🍩", text: "Ты — <strong>Пончик</strong>!<br>Сладкий, мягкий и невероятно позитивный. С тобой всегда праздник, даже в обычный день!" },
+            { emoji: "🍓", text: "Ты — <strong>Клубника</strong>!<br>Яркий, летний и очень романтичный. Ты поднимаешь настроение одним своим появлением!" }
+        ];
+
+        let currentQuestion = 0;
+        let answers = [];
+
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const nextButton = document.getElementById('nextButton');
+        const counter = document.getElementById('counter');
+        const progressFill = document.getElementById('progressFill');
+        const questionScreen = document.getElementById('questionScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const resultText = document.getElementById('resultText');
+
+        function displayQuestion(index) {
+            if (index >= questions.length) {
+                showResult();
+                return;
+            }
+            
+            const q = questions[index];
+            questionText.textContent = q.question;
+            counter.textContent = `Вопрос ${index + 1} из ${questions.length}`;
+            progressFill.style.width = `${(index / questions.length) * 100}%`;
+            
+            optionsContainer.innerHTML = '';
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt;
+                btn.addEventListener('click', () => selectOption(i, btn));
+                optionsContainer.appendChild(btn);
+            });
+            
+            nextButton.disabled = true;
+            nextButton.textContent = index === questions.length - 1 ? 'Узнать результат 🎉' : 'Далее →';
+        }
+
+        function selectOption(index, buttonElement) {
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            buttonElement.classList.add('selected');
+            answers[currentQuestion] = index;
+            nextButton.disabled = false;
+        }
+
+        nextButton.addEventListener('click', () => {
+            currentQuestion++;
+            displayQuestion(currentQuestion);
+        });
+
+        function showResult() {
+            questionScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            
+            const frequency = {};
+            answers.forEach(idx => frequency[idx] = (frequency[idx] || 0) + 1);
+            let dominant = 0;
+            let maxCount = 0;
+            for (const [idx, count] of Object.entries(frequency)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    dominant = parseInt(idx);
+                }
+            }
+            
+            const result = results[dominant % results.length];
+            resultText.innerHTML = `<span class="big-emoji">${result.emoji}</span>${result.text}`;
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            answers = [];
+            questionScreen.classList.remove('hidden');
+            resultScreen.classList.add('hidden');
+            displayQuestion(0);
+        }
+
+        displayQuestion(0);
+    </script>
+</body>
+</html>
